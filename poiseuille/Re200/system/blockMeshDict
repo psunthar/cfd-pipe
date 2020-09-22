@@ -1,0 +1,88 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version 2.0;
+    format ascii;
+    class dictionary;
+    location system;
+    object blockMeshDict;
+}
+    convertToMeters 1;
+
+// Edit wedge dimentions here
+    r  0.5;   // radius of pipe in mm
+    L  24; // Length of pipe in mm
+    th 2.5; // Wedge angle in degree
+
+// Edit discretization here
+    nx 1000; // along x-axis 
+    nr 50;  // radial direction 
+    nt 1;   // theta direction
+
+    wa #calc "degToRad($th/2)"; // half wedge angle in radian
+    yp #calc "$r*cos($wa)";
+    zp #calc "$r*sin($wa)";
+    zn #calc "-1*$zp";
+
+    vertices  
+    (
+      ( 0.0  0.0  0.0)  // vertex 0
+      ( 0.0  $yp  $zn)  // vertex 1
+      ( 0.0  $yp  $zp)  // vertex 2
+      ( $L   0.0  0.0)  // vertex 3
+      ( $L   $yp  $zn)  // vertex 4
+      ( $L   $yp  $zp)  // vertex 5
+    );
+
+    blocks  
+    ( hex ( 0 1 2 0 3 4 5 3) ( $nr $nt $nx) simpleGrading ( 0.1 1 10)
+    );
+    
+    edges  
+    (
+        arc 1 2 ( 0 $r 0)
+        arc 4 5 ($L $r 0)
+    );
+    
+    boundary
+    (
+        axis
+        {
+            type empty;
+            faces ( (0 3 3 0)  );
+        }
+        inlet
+        {
+            type patch;
+            faces ( ( 0 0 2 1) );
+        }
+        wall
+        {
+            type wall;
+            faces ( (2 5 4 1) );
+        }
+        outlet
+        {
+            type patch;
+            faces ( ( 3 4 5 3) );
+        }
+        front
+        {
+            type wedge;
+            faces ( (0 3 5 2) );
+        }        
+        back
+        {
+            type wedge;
+            faces ( (0 1 4 3) );
+        } 
+    );
+    mergePatchPairs  
+    (
+    );
